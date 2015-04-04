@@ -1,0 +1,40 @@
+VSpec = FM (VideoSurveillanceApplication: Task ObjectOfInterest Environment QualityOfService ; 
+		Task: (IntrusionTask|CountingTask|TrackingTask)+ ;
+			IntrusionTask: (WithoutReco|WithReco); 
+		ObjectOfInterest: (Any|Natural|Manufactured)+ ; 
+			Natural:(Person |Animal);
+		Environment: LightLevel LightingConditions ; 
+			LightLevel: (LowLighting|HighLighting); 
+			LightingConditions: (ArtificialLight|NaturalLight)+ ; 
+		QualityOfService: (ComputerLoad|ResponseTime|Quality)+ ; 
+			Quality: (Sensitivity|Precision)+ ; 
+				Precision : (HighPrecision|LowPrecision) ;
+
+	(ResponseTime -> TrackingTask);
+	(CountingTask -> HighPrecision);
+	(CountingTask ->!Any );
+	(LowLighting ->  WithoutReco);
+	(WithReco -> !Any); )
+
+VImpl = FM(VideoSurveillanceSystem: Acquisition Segmentation Clustering [ShadowRemoval] Tracking; 
+		Acquisition: ResolutionLevel ColorType; 
+			ResolutionLevel: (HighResolution| LowResolution); 
+			ColorType: (GreyLevel|FullColor|NearIR) ; 
+		Segmentation: TraversalAlgorithm KernelFunction ; 
+		  	TraversalAlgorithm: TraversalParameters GridStep ; 
+				TraversalParameters: (WithWindow|WithMask|Fast)+ ; 
+			    	GridStep: (HighGridStep|LowGridStep) ; 
+		Tracking: (TrackingColor| Texture);
+			    
+	(TrackingColor -> FullColor);
+	(Texture -> HighResolution); )
+
+
+crossrules = constraints ( LowLighting -> NearIR; LowLighting -> LowResolution; ShadowRemoval -> HighLighting ;)
+
+
+VSFM = aggregate { VSpec VImpl } withMapping crossrules
+//cleanup VSFM
+
+DEPLOYMENT = configuration VSFM
+
